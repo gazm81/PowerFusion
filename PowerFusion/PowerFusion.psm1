@@ -122,7 +122,6 @@ function Connect-FusionServer {
 
 }
 
-
 <#
     - Function: Disconnect-FusionServer
 #>

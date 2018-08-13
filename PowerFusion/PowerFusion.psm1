@@ -12,7 +12,7 @@ $ExecutionContext.SessionState.Module.OnRemove = {
     Remove-Variable -Name FusionConnection -Force -ErrorAction SilentlyContinue
 }
 function Connect-FusionServer {
-<#
+    <#
     .SYNOPSIS
     Connect to a Fusion Server
 
@@ -50,39 +50,39 @@ function Connect-FusionServer {
     $SecurePassword = ConvertTo-SecureString “P@ssword” -AsPlainText -Force
     Connect-vRAServer -Server 127.0.0.1 -port 8697 -Username admin -Password $SecurePassword
 #>
-[CmdletBinding(DefaultParametersetName="Username")][OutputType('System.Management.Automation.PSObject')]
+    [CmdletBinding(DefaultParametersetName = "Username")][OutputType('System.Management.Automation.PSObject')]
 
     Param (
 
-        [parameter(Mandatory=$false)]
+        [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [String]$Server = "127.0.0.1",
 
-        [parameter(Mandatory=$false)]
+        [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [String]$Port = "8697",
 
-        [parameter(Mandatory=$true,ParameterSetName="Username")]
+        [parameter(Mandatory = $true, ParameterSetName = "Username")]
         [ValidateNotNullOrEmpty()]
         [String]$Username,
 
-        [parameter(Mandatory=$true,ParameterSetName="Username")]
+        [parameter(Mandatory = $true, ParameterSetName = "Username")]
         [ValidateNotNullOrEmpty()]
         [SecureString]$Password,
 
-        [Parameter(Mandatory=$true,ParameterSetName="Credential")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Credential")]
         [ValidateNotNullOrEmpty()]
         [Management.Automation.PSCredential]$Credential
     )
 
     # --- Convert Secure Credentials to a format for sending in the JSON payload
-    if ($PSBoundParameters.ContainsKey("Credential")){
+    if ($PSBoundParameters.ContainsKey("Credential")) {
 
         $Username = $Credential.UserName
         $JSONPassword = $Credential.GetNetworkCredential().Password
     }
 
-    if ($PSBoundParameters.ContainsKey("Password")){
+    if ($PSBoundParameters.ContainsKey("Password")) {
 
         $JSONPassword = (New-Object System.Management.Automation.PSCredential("username", $Password)).GetNetworkCredential().Password
     }
@@ -98,15 +98,15 @@ function Connect-FusionServer {
         # --- Create Output Object
         $Global:FusionConnection = [PSCustomObject] @{
 
-            Server = "http://$($Server):$($Port)"
-            Token = $encodedCredentials
-            Port = $Port
-            Username = $Username
+            Server     = "http://$($Server):$($Port)"
+            Token      = $encodedCredentials
+            Port       = $Port
+            Username   = $Username
             APIVersion = "1.0"
         }
 
     }
-    catch [Exception]{
+    catch [Exception] {
 
         throw
 
@@ -116,7 +116,7 @@ function Connect-FusionServer {
 
 }
 function Disconnect-FusionServer {
-<#
+    <#
     .SYNOPSIS
     Disconnect from a Fusion server
 
@@ -129,24 +129,24 @@ function Disconnect-FusionServer {
     .EXAMPLE
     Disconnect-FusionServer -Confirm:$false
 #>
-[CmdletBinding(SupportsShouldProcess,ConfirmImpact="High")]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "High")]
 
     Param ()
 
     # --- Test for existing connection to vRA
-    if (-not $Global:FusionConnection){
+    if (-not $Global:FusionConnection) {
 
         throw "Fusion Connection variable does not exist. Please run Connect-FusionServer first to create it"
     }
 
-    if ($PSCmdlet.ShouldProcess($Global:FusionConnection.Server)){
+    if ($PSCmdlet.ShouldProcess($Global:FusionConnection.Server)) {
         Write-Verbose -Message "Removing vRAConnection global variable"
         Remove-Variable -Name vRAConnection -Scope Global -Force -ErrorAction SilentlyContinue
     }
 
 }
 function Invoke-FusionRestMethod {
-<#
+    <#
     .SYNOPSIS
     Wrapper for Invoke-RestMethod/Invoke-WebRequest with Fusion specifics
 
@@ -197,44 +197,44 @@ function Invoke-FusionRestMethod {
 
     Invoke-FusionRestMethod -Method PUT -URI '/identity/api/tenants/Tenant02' -Body $JSON -WebRequest
 #>
-[CmdletBinding(DefaultParameterSetName="Standard")][OutputType('System.Management.Automation.PSObject')]
+    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
 
     Param (
 
-        [Parameter(Mandatory=$true, ParameterSetName="Standard")]
-        [Parameter(Mandatory=$true, ParameterSetName="Body")]
-        [Parameter(Mandatory=$true, ParameterSetName="OutFile")]
-        [ValidateSet("GET","POST","PUT","DELETE")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Standard")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Body")]
+        [Parameter(Mandatory = $true, ParameterSetName = "OutFile")]
+        [ValidateSet("GET", "POST", "PUT", "DELETE")]
         [String]$Method,
 
-        [Parameter(Mandatory=$true, ParameterSetName="Standard")]
-        [Parameter(Mandatory=$true, ParameterSetName="Body")]
-        [Parameter(Mandatory=$true, ParameterSetName="OutFile")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Standard")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Body")]
+        [Parameter(Mandatory = $true, ParameterSetName = "OutFile")]
         [ValidateNotNullOrEmpty()]
         [String]$URI,
 
-        [Parameter(Mandatory=$false, ParameterSetName="Standard")]
-        [Parameter(Mandatory=$false, ParameterSetName="Body")]
-        [Parameter(Mandatory=$false, ParameterSetName="OutFile")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Standard")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Body")]
+        [Parameter(Mandatory = $false, ParameterSetName = "OutFile")]
         [ValidateNotNullOrEmpty()]
         [System.Collections.IDictionary]$Headers,
 
-        [Parameter(Mandatory=$false, ParameterSetName="Body")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Body")]
         [ValidateNotNullOrEmpty()]
         [String]$Body,
 
-        [Parameter(Mandatory=$false, ParameterSetName="OutFile")]
+        [Parameter(Mandatory = $false, ParameterSetName = "OutFile")]
         [ValidateNotNullOrEmpty()]
         [String]$OutFile,
 
-        [Parameter(Mandatory=$false, ParameterSetName="Standard")]
-        [Parameter(Mandatory=$false, ParameterSetName="Body")]
-        [Parameter(Mandatory=$false, ParameterSetName="OutFile")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Standard")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Body")]
+        [Parameter(Mandatory = $false, ParameterSetName = "OutFile")]
         [Switch]$WebRequest
     )
 
     # --- Test for existing connection to vRA
-    if (-not $Global:FusionConnection){
+    if (-not $Global:FusionConnection) {
 
         throw "Fusion Connection variable does not exist. Please run Connect-FusionServer first to create it"
     }
@@ -243,12 +243,12 @@ function Invoke-FusionRestMethod {
     $FullURI = "$($Global:FusionConnection.Server)$($URI)"
 
     # --- Add default headers if not passed
-    if (!$PSBoundParameters.ContainsKey("Headers")){
+    if (!$PSBoundParameters.ContainsKey("Headers")) {
 
         $Headers = @{
 
-            "Accept"="application/json";
-            "Content-Type" = "application/json";
+            "Accept"        = "application/json";
+            "Content-Type"  = "application/json";
             "Authorization" = "Basic $($Global:FusionConnection.Token)";
         }
     }
@@ -256,9 +256,9 @@ function Invoke-FusionRestMethod {
     # --- Set up default parmaeters
     $Params = @{
 
-        Method = $Method
+        Method  = $Method
         Headers = $Headers
-        Uri = $FullURI
+        Uri     = $FullURI
     }
 
     if ($PSBoundParameters.ContainsKey("Body")) {
@@ -268,7 +268,8 @@ function Invoke-FusionRestMethod {
         # --- Log the payload being sent to the server
         Write-Debug -Message $Body
 
-    } elseif ($PSBoundParameters.ContainsKey("OutFile")) {
+    }
+    elseif ($PSBoundParameters.ContainsKey("OutFile")) {
 
         $Params.Add("OutFile", $OutFile)
 
@@ -304,6 +305,7 @@ function Invoke-FusionRestMethod {
     }
 }
 function Get-FusionVm {
+
     <#
         .SYNOPSIS
         Get a VMware Fusion Virtual Machine
@@ -327,83 +329,150 @@ function Get-FusionVm {
         Get-FusionVm -Id "6195fd70"
     
     #>
-    [CmdletBinding(DefaultParameterSetName="Standard")][OutputType('System.Management.Automation.PSObject')]
+    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
     
-        Param (
+    Param (
     
-            [Parameter(Mandatory=$true,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,ParameterSetName="ById")]
-            [ValidateNotNullOrEmpty()]
-            [String[]]$Id
-        )
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String[]]$Id
+    )
     
-        Begin {
+    Begin {
     
-            # --- Test for Fusion API version
+        # --- Test for Fusion API version
     
-        }
+    }
     
-        Process {
+    Process {
     
-            try {
+        try {
     
-                switch ($PsCmdlet.ParameterSetName) {
+            switch ($PsCmdlet.ParameterSetName) {
     
-                    # --- Get Resource by id
-                    'ById' {
+                # --- Get Resource by id
+                'ById' {
                     
-                        foreach ($ResourceId in $Id) { 
+                    foreach ($ResourceId in $Id) { 
                     
-                            $URI = "/api/vms/$($ResourceId)"
+                        $URI = "/api/vms/$($ResourceId)"
     
-                            $EscapedURI = [uri]::EscapeUriString($URI)
+                        $EscapedURI = [uri]::EscapeUriString($URI)
     
-                            $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
     
-                            if ($Response) {
-                                foreach ($R in $Response){
-                                    [PSCustomObject]@{
-                                        id = $R.id
-                                        #processors = $R.cpu.processors
-                                        cpu = @{processors = $R.cpu.processors}
-                                        memory = $R.memory   
-                                    }
-                                }
-                            }
-                            else {
-                                Write-Verbose -Message "Could not find resource item with id: $($ResourceId)"
-                            }
-                        }    
-                        break   
-                    }        
-
-                    # --- No parameters passed so return all resources
-                    'Standard' {
-       
-                        $EscapedURI = [uri]::EscapeUriString("/api/vms")
-
-                        try {
-                            $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
-                            
-                            if ($Response) {
-                                foreach ($R in $Response) {
-                                    [PSCustomObject]@{
-                                        id = $R.id
-                                        path = $R.path
-                                    }
+                        if ($Response) {
+                            foreach ($R in $Response) {
+                                [PSCustomObject]@{
+                                    id     = $R.id
+                                    #processors = $R.cpu.processors
+                                    cpu    = @{processors = $R.cpu.processors}
+                                    memory = $R.memory   
                                 }
                             }
                         }
-                        catch {
-                            throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
-                        }                        
-                        break
+                        else {
+                            Write-Verbose -Message "Could not find resource item with id: $($ResourceId)"
+                        }
+                    }    
+                    break   
+                }        
+
+                # --- No parameters passed so return all resources
+                'Standard' {
+       
+                    $EscapedURI = [uri]::EscapeUriString("/api/vms")
+
+                    try {
+                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                            
+                        if ($Response) {
+                            foreach ($R in $Response) {
+                                [PSCustomObject]@{
+                                    id   = $R.id
+                                    path = $R.path
+                                }
+                            }
+                        }
                     }
+                    catch {
+                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
+                    }                        
+                    break
                 }
             }
-            catch [Exception]{
-                throw
-            }
-        }   
-        End {    
-        }    
+        }
+        catch [Exception] {
+            throw
+        }
+    }   
+    End {    
+    }    
+}
+function Get-FusionNetwork {
+
+    <#
+        .SYNOPSIS
+        Get a VMware Fusion Network
+        
+        .DESCRIPTION
+        Returns a network or networks usable in VMware Fusion via the Rest API.
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject.
+    
+        .EXAMPLE
+        Get-FusionNetwork
+    
+    #>
+    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+    )
+    
+    Begin {
+    
+        # --- Test for Fusion API version
+    
     }
+    
+    Process {
+    
+        try {
+    
+            switch ($PsCmdlet.ParameterSetName) {     
+
+                # --- No parameters passed so return all resources
+                'Standard' {
+       
+                    $EscapedURI = [uri]::EscapeUriString("/api/vmnet")
+
+                    try {
+                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                            
+                        if ($Response) {
+                            foreach ($R in $Response.vmnets) {
+                                [PSCustomObject]@{
+                                    name = $R.name
+                                    type = $R.type
+                                    dhcp = $R.dhcp
+                                    subnet = $R.subnet
+                                    mask = $R.mask
+                                }
+                            }
+                        }
+                    }
+                    catch {
+                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
+                    }                        
+                    break
+                }
+            }
+        }
+        catch [Exception] {
+            throw
+        }
+    }   
+    End {    
+    }    
+}

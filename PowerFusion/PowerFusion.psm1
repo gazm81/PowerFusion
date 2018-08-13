@@ -7,16 +7,10 @@ _____                                     ______                 _
 |_|       \___/    \_/\_/    \___| |_|    |_|       \__,_| |___/ |_|  \___/  |_| |_|
 #>
 
-# --- Clean up vRAConnection variable on module remove
+# --- Clean up FusionConnection variable on module remove
 $ExecutionContext.SessionState.Module.OnRemove = {
-
     Remove-Variable -Name FusionConnection -Force -ErrorAction SilentlyContinue
-
 }
-<#
-    - Function: Connect-FusionServer
-#>
-
 function Connect-FusionServer {
 <#
     .SYNOPSIS
@@ -121,11 +115,6 @@ function Connect-FusionServer {
     Write-Output $FusionConnection
 
 }
-
-<#
-    - Function: Disconnect-FusionServer
-#>
-
 function Disconnect-FusionServer {
 <#
     .SYNOPSIS
@@ -156,11 +145,6 @@ function Disconnect-FusionServer {
     }
 
 }
-
-<#
-    - Function: Invoke-FusionRestMethod
-#>
-
 function Invoke-FusionRestMethod {
 <#
     .SYNOPSIS
@@ -319,11 +303,6 @@ function Invoke-FusionRestMethod {
         }
     }
 }
-
-<#
-    - Function: Get-FusionVm
-#>
-
 function Get-FusionVm {
     <#
         .SYNOPSIS
@@ -337,8 +316,6 @@ function Get-FusionVm {
         
         .INPUTS
         System.String
-        System.Int
-        Switch
     
         .OUTPUTS
         System.Management.Automation.PSObject.
@@ -380,114 +357,53 @@ function Get-FusionVm {
     
                             $EscapedURI = [uri]::EscapeUriString($URI)
     
-                            $Response = Invoke-FusionRMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                            $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
     
-                            if ($Response.content.Count -ne 0) {
-                                intNewFusionObjectVm $Response.content
+                            if ($Response) {
+                                foreach ($R in $Response){
+                                    [PSCustomObject]@{
+                                        id = $R.id
+                                        #processors = $R.cpu.processors
+                                        cpu = @{processors = $R.cpu.processors}
+                                        memory = $R.memory   
+                                    }
+                                }
                             }
                             else {
                                 Write-Verbose -Message "Could not find resource item with id: $($ResourceId)"
                             }
-    
-                        }
-    
-                        break
-    
+                        }    
+                        break   
                     }        
 
                     # --- No parameters passed so return all resources
                     'Standard' {
-    
-                        # Fusion REST query is limited to only 100 items per page when extended data is requested. So the script must parse all pages returned
-                        $nbPage = 1
-                        $TotalPages = 99999 #Total pages is known after the 1st vRA REST query
-                        
-                        For ($nbPage=1; $nbPage -le $TotalPages; $nbPage++) {
-                            # --- Set the default URI with no filtering to return all resource types
-                            $URI = "/catalog-service/api/consumer/resourceViews/?withExtendedData=$($WithExtendedData)&withOperations=$($WithOperations)&managedOnly=$($ManagedOnly)&`$orderby=name asc&limit=$($Limit)&page=$($nbPage)"
-    
-                            # --- If type is passed set the filter
-                            if ($PSBoundParameters.ContainsKey("Type")){
-    
-                                switch ($Type) {
-    
-                                    'Deployment' {
-    
-                                        $Filter = "resourceType/id eq 'composition.resource.type.deployment'"
-                                        $URI = "$($URI)&`$filter=$($filter)"
-    
-                                        break
-    
+       
+                        $EscapedURI = [uri]::EscapeUriString("/api/vms")
+
+                        try {
+                            $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                            
+                            if ($Response) {
+                                foreach ($R in $Response) {
+                                    [PSCustomObject]@{
+                                        id = $R.id
+                                        path = $R.path
                                     }
-    
-                                    'Machine' {
-    
-                                        $Filter = "resourceType/id eq 'Infrastructure.Machine' or `
-                                        resourceType/id eq 'Infrastructure.Virtual' or `
-                                        resourceType/id eq 'Infrastructure.Cloud' or `
-                                        resourceType/id eq 'Infrastructure.Physical'"
-    
-                                        $URI = "$($URI)&`$filter=$($filter)"
-    
-                                        break
-    
-                                    }
-    
                                 }
-    
-                                Write-Verbose -Message "Type $($Type) selected"
-    
-                            }
-    
-                            $EscapedURI = [uri]::EscapeUriString($URI)
-    
-                            try {
-                                $Response = Invoke-vRARestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
-                                
-                                foreach ($Resource in $Response.content) {
-                                   intNewvRAObjectResource $Resource
-                                }
-    
-                                $TotalPages = $Response.metadata.totalPages
-                                Write-Verbose -Message "Total: $($Response.metadata.totalElements) | Page: $($nbPage) of $($TotalPages) | Size: $($Response.metadata.size)"
-                            }
-                            catch {
-                                throw "An error occurred when getting vRA Resources! $($_.Exception.Message)"
                             }
                         }
-                        
+                        catch {
+                            throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
+                        }                        
                         break
-    
                     }
-    
                 }
-    
             }
             catch [Exception]{
-    
                 throw
-    
             }
-    
-        }
-    
-        End {
-    
-        }
-    
+        }   
+        End {    
+        }    
     }
-    
-    Function intNewFusionObjectVm {
-        Param (
-            [Parameter(Mandatory=$true)]
-            [ValidateNotNullOrEmpty()]
-            $Data
-        )
-    
-        [PSCustomObject]@{
-            Id = $Data.Id
-            Memory = $Data.Memory
-        }
-    }
-    
-    

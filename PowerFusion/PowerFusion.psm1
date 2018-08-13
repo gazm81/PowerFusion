@@ -410,7 +410,6 @@ function Get-FusionVm {
     }    
 }
 function Get-FusionNetwork {
-
     <#
         .SYNOPSIS
         Get a VMware Fusion Network
@@ -453,11 +452,83 @@ function Get-FusionNetwork {
                         if ($Response) {
                             foreach ($R in $Response.vmnets) {
                                 [PSCustomObject]@{
-                                    name = $R.name
-                                    type = $R.type
-                                    dhcp = $R.dhcp
+                                    name   = $R.name
+                                    type   = $R.type
+                                    dhcp   = $R.dhcp
                                     subnet = $R.subnet
-                                    mask = $R.mask
+                                    mask   = $R.mask
+                                }
+                            }
+                        }
+                    }
+                    catch {
+                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
+                    }                        
+                    break
+                }
+            }
+        }
+        catch [Exception] {
+            throw
+        }
+    }   
+    End {    
+    }    
+}
+function Get-FusionNetworkPortForward {
+    <#
+        .SYNOPSIS
+        Get a VMware Fusion Network Port Forward
+        
+        .DESCRIPTION
+        Returns a network Port Forwarder/s per network in VMware Fusion via the Rest API.
+
+        .PARAMETER Id
+        The vmnet id of the network resource
+
+        .INPUTS
+        String
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject.
+    
+        .EXAMPLE
+        Get-FusionNetworkPortForward -vmnet
+    
+    #>
+    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "Standard")]
+        [ValidateNotNullOrEmpty()]
+        [String[]]$id       
+    )
+    
+    Begin {
+    
+        # --- Test for Fusion API version
+    
+    }
+    
+    Process {
+    
+        try {
+    
+            switch ($PsCmdlet.ParameterSetName) {     
+
+                # --- No parameters passed so return all resources
+                'Standard' {
+       
+                    $EscapedURI = [uri]::EscapeUriString("/api/vmnet/$($id)/portforward")
+
+                    try {
+                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                            
+                        if ($Response) {
+                            foreach ($R in $Response) {
+                                [PSCustomObject]@{
+                                    num              = $R.num
+                                    port_forwardings = $R.port_forwardings
                                 }
                             }
                         }

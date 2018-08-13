@@ -547,3 +547,149 @@ function Get-FusionNetworkPortForward {
     End {    
     }    
 }
+
+function Get-FusionVmNetworkAdapter {
+    <#
+        .SYNOPSIS
+        Get a VMware Fusion VM Network Adapter
+        
+        .DESCRIPTION
+        Returns a VM network adapter per VM in VMware Fusion via the Rest API.
+
+        .PARAMETER Id
+        The vmnet id of the vm
+
+        .INPUTS
+        String
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject.
+    
+        .EXAMPLE
+        Get-FusionVmNetworkAdapter -id "AHA7A1"
+    
+    #>
+    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "Standard")]
+        [ValidateNotNullOrEmpty()]
+        [String[]]$id       
+    )
+    
+    Begin {
+    
+        # --- Test for Fusion API version
+    
+    }
+    
+    Process {
+    
+        try {
+    
+            switch ($PsCmdlet.ParameterSetName) {     
+
+                # --- No parameters passed so return all resources
+                'Standard' {
+       
+                    $EscapedURI = [uri]::EscapeUriString("/api/vms/$($id)/nic")
+
+                    try {
+                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                            
+                        if ($Response) {
+                            foreach ($R in $Response.nics) {
+                                [PSCustomObject]@{
+                                    index              = $R.index
+                                    type = $R.type
+                                    vmnet = $R.vmnet
+                                }
+                            }
+                        }
+                    }
+                    catch {
+                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
+                    }                        
+                    break
+                }
+            }
+        }
+        catch [Exception] {
+            throw
+        }
+    }   
+    End {    
+    }    
+}
+
+function Get-FusionVmNetworkIp {
+    <#
+        .SYNOPSIS
+        Get a VMware Fusion VM Network IP
+        
+        .DESCRIPTION
+        Returns a VM network IP per VM in VMware Fusion via the Rest API.
+
+        .PARAMETER Id
+        The vmnet id of the vm
+
+        .INPUTS
+        String
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject.
+    
+        .EXAMPLE
+        Get-FusionVmNetworkIp -id "AHA7A1"
+    
+    #>
+    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "Standard")]
+        [ValidateNotNullOrEmpty()]
+        [String[]]$id       
+    )
+    
+    Begin {
+    
+        # --- Test for Fusion API version
+    
+    }
+    
+    Process {
+    
+        try {
+    
+            switch ($PsCmdlet.ParameterSetName) {     
+
+                # --- No parameters passed so return all resources
+                'Standard' {
+       
+                    $EscapedURI = [uri]::EscapeUriString("/api/vms/$($id)/ip")
+
+                    try {
+                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                            
+                        if ($Response) {
+                            foreach ($R in $Response) {
+                                [PSCustomObject]@{
+                                    ip              = $R.ip
+                                }
+                            }
+                        }
+                    }
+                    catch {
+                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
+                    }                        
+                    break
+                }
+            }
+        }
+        catch [Exception] {
+            throw
+        }
+    }   
+    End {    
+    }    
+}

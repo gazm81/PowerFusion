@@ -141,7 +141,7 @@ function Disconnect-FusionServer {
 
     if ($PSCmdlet.ShouldProcess($Global:FusionConnection.Server)) {
         Write-Verbose -Message "Removing vRAConnection global variable"
-        Remove-Variable -Name vRAConnection -Scope Global -Force -ErrorAction SilentlyContinue
+        Remove-Variable -Name FusionConnection -Scope Global -Force -ErrorAction SilentlyContinue
     }
 
 }
@@ -547,7 +547,6 @@ function Get-FusionNetworkPortForward {
     End {    
     }    
 }
-
 function Get-FusionVmNetworkAdapter {
     <#
         .SYNOPSIS
@@ -621,7 +620,6 @@ function Get-FusionVmNetworkAdapter {
     End {    
     }    
 }
-
 function Get-FusionVmNetworkIp {
     <#
         .SYNOPSIS
@@ -675,6 +673,148 @@ function Get-FusionVmNetworkIp {
                             foreach ($R in $Response) {
                                 [PSCustomObject]@{
                                     ip              = $R.ip
+                                }
+                            }
+                        }
+                    }
+                    catch {
+                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
+                    }                        
+                    break
+                }
+            }
+        }
+        catch [Exception] {
+            throw
+        }
+    }   
+    End {    
+    }    
+}
+function Get-FusionVmPower {
+    <#
+        .SYNOPSIS
+        Get a VMware Fusion VM Power State
+        
+        .DESCRIPTION
+        Returns a VM Power State in VMware Fusion via the Rest API.
+
+        .PARAMETER Id
+        The vmnet id of the vm
+
+        .INPUTS
+        String
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject.
+    
+        .EXAMPLE
+        Get-FusionVmPower -id "AHA7A1"
+    
+    #>
+    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "Standard")]
+        [ValidateNotNullOrEmpty()]
+        [String[]]$id       
+    )
+    
+    Begin {
+    
+        # --- Test for Fusion API version
+    
+    }
+    
+    Process {
+    
+        try {
+    
+            switch ($PsCmdlet.ParameterSetName) {     
+
+                # --- No parameters passed so return all resources
+                'Standard' {
+       
+                    $EscapedURI = [uri]::EscapeUriString("/api/vms/$($id)/power")
+
+                    try {
+                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                            
+                        if ($Response) {
+                            foreach ($R in $Response) {
+                                [PSCustomObject]@{
+                                    power_state              = $R.power_state
+                                }
+                            }
+                        }
+                    }
+                    catch {
+                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
+                    }                        
+                    break
+                }
+            }
+        }
+        catch [Exception] {
+            throw
+        }
+    }   
+    End {    
+    }    
+}
+function Get-FusionVmSharedFolders {
+    <#
+        .SYNOPSIS
+        Get a VMware Fusion VM Shared Folders
+        
+        .DESCRIPTION
+        Returns a VM's shared folders in VMware Fusion via the Rest API.
+
+        .PARAMETER Id
+        The vmnet id of the vm
+
+        .INPUTS
+        String
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject.
+    
+        .EXAMPLE
+        Get-FusionVmShareFolder -id "AHA7A1"
+    
+    #>
+    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "Standard")]
+        [ValidateNotNullOrEmpty()]
+        [String[]]$id       
+    )
+    
+    Begin {
+    
+        # --- Test for Fusion API version
+    
+    }
+    
+    Process {
+    
+        try {
+    
+            switch ($PsCmdlet.ParameterSetName) {     
+
+                # --- No parameters passed so return all resources
+                'Standard' {
+       
+                    $EscapedURI = [uri]::EscapeUriString("/api/vms/$($id)/sharedfolders")
+
+                    try {
+                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                            
+                        if ($Response) {
+                            foreach ($R in $Response) {
+                                [PSCustomObject]@{
+                                    power_state              = $R.power_state
                                 }
                             }
                         }

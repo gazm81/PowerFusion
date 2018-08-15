@@ -247,8 +247,8 @@ function Invoke-FusionRestMethod {
 
         $Headers = @{
 
-            "Accept"        = "application/json";
-            "Content-Type"  = "application/json";
+            "Accept"        = "application/vnd.vmware.vmw.rest-v1+json";
+            "Content-Type"  = "application/vnd.vmware.vmw.rest-v1+json";
             "Authorization" = "Basic $($Global:FusionConnection.Token)";
         }
     }
@@ -833,3 +833,62 @@ function Get-FusionVmSharedFolders {
     End {    
     }    
 }
+function Set-FusionVmPower {
+    <#
+        .SYNOPSIS
+        Set the power state on a fusion VM
+        
+        .DESCRIPTION
+        Set the power state on a fusion VM
+    
+        .PARAMETER Id
+        A list of the vm ids
+    
+        .PARAMETER PowerState
+        the desired power state
+    
+        .INPUTS
+        System.String.
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject
+    
+        .EXAMPLE
+        Set-FusionVmPower -id "12345" -PowerState "on"
+    #>
+    [CmdletBinding(SupportsShouldProcess,ConfirmImpact="Low",DefaultParameterSetName="ById")][OutputType('System.Management.Automation.PSObject')]
+    
+        Param (
+    
+            [Parameter(Mandatory=$true,ParameterSetName="ById")]
+            [ValidateNotNullOrEmpty()]
+            [String[]]$Id,
+    
+            [Parameter(Mandatory=$true,ParameterSetName="ById")]
+            [ValidateNotNullOrEmpty()]
+            [ValidateSet("on", "off", "shutdown", "suspend", "pause", "unpause")]
+            [String]$PowerState
+        )
+    
+        begin {
+        }
+        
+        process {
+        }
+        end {
+    
+            # --- Convert PSCustomObject to a string
+            $Body = $PowerState                    
+    
+            if ($PSCmdlet.ShouldProcess($Name)){
+    
+                $URI = "/api/vms/$Id/power"
+    
+                # --- Run Fusion REST Request
+                Invoke-FusionRestMethod -Method PUT -URI $URI -Body $Body -Verbose:$VerbosePreference | Out-Null
+    
+                # --- Output the Successful Result
+                Get-FusionVmPower -id $Id -Verbose:$VerbosePreference
+            }   
+        }
+    }

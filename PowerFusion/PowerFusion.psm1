@@ -892,3 +892,74 @@ function Set-FusionVmPower {
             }   
         }
     }
+
+    function Set-FusionVm {
+        <#
+            .SYNOPSIS
+            Set the config of the fusion VM
+            
+            .DESCRIPTION
+            Set the config of the fusion VM
+        
+            .PARAMETER Id
+            A list of the vm ids
+        
+            .PARAMETER processors
+            the desired number of cpus
+
+            .PARAMETER memory
+            desired amount of memory mb
+        
+            .INPUTS
+            System.String.
+        
+            .OUTPUTS
+            System.Management.Automation.PSObject
+        
+            .EXAMPLE
+            Set-FusionVm -id "12345" -Cpus 2 -MemoryMb 4096
+        #>
+        [CmdletBinding(SupportsShouldProcess,ConfirmImpact="Low",DefaultParameterSetName="ById")][OutputType('System.Management.Automation.PSObject')]
+        
+            Param (
+        
+                [Parameter(Mandatory=$true,ParameterSetName="ById")]
+                [ValidateNotNullOrEmpty()]
+                [String[]]$Id,
+        
+                [Parameter(Mandatory=$true,ParameterSetName="ById")]
+                [ValidateNotNullOrEmpty()]
+                [String]$processors,
+
+                [Parameter(Mandatory=$true,ParameterSetName="ById")]
+                [ValidateNotNullOrEmpty()]
+                [String]$memory
+            )
+        
+            begin {
+                $Object = [PSCustomObject] @{
+                    processors = $processors
+                    memory = $memory
+                }
+            }
+            
+            process {
+            }
+
+            end {
+        
+                # --- Convert PSCustomObject to a string
+                $Body = $Object | ConvertTo-Json                    
+        
+                if ($PSCmdlet.ShouldProcess($Name)){
+        
+                    $URI = "/api/vms/$Id"
+        
+                    # --- Run Fusion REST Request
+                    Invoke-FusionRestMethod -Method PUT -URI $URI -Body $Body -Verbose:$VerbosePreference | Out-Null
+        
+                    # --- Output the Successful Result
+                    Get-FusionVm -id $Id -Verbose:$VerbosePreference
+                }   
+            }
+        }

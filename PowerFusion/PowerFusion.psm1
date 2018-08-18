@@ -893,7 +893,7 @@ function Set-FusionVmPower {
         }
     }
 
-    function Set-FusionVm {
+function Set-FusionVm {
         <#
             .SYNOPSIS
             Set the config of the fusion VM
@@ -963,3 +963,123 @@ function Set-FusionVmPower {
                 }   
             }
         }
+
+function Clone-FusionVm {
+       <#
+        .SYNOPSIS
+        Creates a new fusion vm via cloning existing fusion vm
+        
+        .DESCRIPTION
+        Creates a new fusion vm via cloning existing fusion vm
+    
+        .PARAMETER ParentId
+        ID of the VM to be cloned
+    
+        .PARAMETER Name
+        Name of the new VM
+    
+        .INPUTS
+        System.String.
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject
+    
+        .EXAMPLE
+        Clone-FusionVm -ParentiId "12345" -Name "NewMachine01"
+    #>
+    [CmdletBinding(SupportsShouldProcess,ConfirmImpact="Low",DefaultParameterSetName="ById")][OutputType('System.Management.Automation.PSObject')]
+    
+        Param (
+    
+            [Parameter(Mandatory=$true,ParameterSetName="ById")]
+            [ValidateNotNullOrEmpty()]
+            [String[]]$ParentId,
+    
+            [Parameter(Mandatory=$true,ParameterSetName="ById")]
+            [ValidateNotNullOrEmpty()]
+            [String]$Name
+        )
+    
+        begin {
+            $Object = [PSCustomObject] @{
+                parentid = $ParentId
+                name = $Name
+            }
+        }
+        
+        process {
+        }
+        end {
+    
+            # --- Convert PSCustomObject to a string
+            $Body = $Object | ConvertFrom-Json                    
+    
+            if ($PSCmdlet.ShouldProcess($Name)){
+    
+                $URI = "/api/vms"
+    
+                # --- Run Fusion REST Request
+                $Response = Invoke-FusionRestMethod -Method POST -URI $URI -Body $Body -Verbose:$VerbosePreference
+    
+                # --- Output the Successful Result
+                If ($Response.id){$Response}
+            }   
+        }
+}
+function Delete-FusionVm {
+    param (
+        $OptionalParameters
+    )
+}
+function Delete-FusionVmNetworkAdapter {
+    param (
+        $OptionalParameters
+    )   
+}
+
+function Create-FusionVmNetworkAdapter {
+    param (
+        $OptionalParameters
+    )   
+}
+
+function Set-FusionVmNetworkAdapter {
+    param (
+        $OptionalParameters
+    )   
+}
+
+function Set-FusionNetworkPortForward {
+    param (
+        $OptionalParameters
+    )
+}
+
+function Delete-FusionNetworkPortForward {
+    param (
+        $OptionalParameters
+    )
+}
+
+function Delete-FusionVmSharedFolders {
+    param (
+        $OptionalParameters
+    )
+    
+}
+
+function Mount-FusionVmSharedFolders {
+    param (
+        $OptionalParameters
+    )
+    
+}
+
+function Set-FusionVmSharedFolders {
+    param (
+        $OptionalParameters
+    )
+    
+}
+
+###

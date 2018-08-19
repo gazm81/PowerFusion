@@ -599,8 +599,8 @@ function Get-FusionVmNetworkAdapter {
                         if ($Response) {
                             foreach ($R in $Response.nics) {
                                 [PSCustomObject]@{
-                                    index              = $R.index
-                                    type = $R.type
+                                    index = $R.index
+                                    type  = $R.type
                                     vmnet = $R.vmnet
                                 }
                             }
@@ -672,7 +672,7 @@ function Get-FusionVmNetworkIp {
                         if ($Response) {
                             foreach ($R in $Response) {
                                 [PSCustomObject]@{
-                                    ip              = $R.ip
+                                    ip = $R.ip
                                 }
                             }
                         }
@@ -743,7 +743,7 @@ function Get-FusionVmPower {
                         if ($Response) {
                             foreach ($R in $Response) {
                                 [PSCustomObject]@{
-                                    power_state              = $R.power_state
+                                    power_state = $R.power_state
                                 }
                             }
                         }
@@ -814,7 +814,7 @@ function Get-FusionVmSharedFolders {
                         if ($Response) {
                             foreach ($R in $Response) {
                                 [PSCustomObject]@{
-                                    power_state              = $R.power_state
+                                    power_state = $R.power_state
                                 }
                             }
                         }
@@ -856,45 +856,45 @@ function Set-FusionVmPower {
         .EXAMPLE
         Set-FusionVmPower -id "12345" -PowerState "on"
     #>
-    [CmdletBinding(SupportsShouldProcess,ConfirmImpact="Low",DefaultParameterSetName="ById")][OutputType('System.Management.Automation.PSObject')]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low", DefaultParameterSetName = "ById")][OutputType('System.Management.Automation.PSObject')]
     
-        Param (
+    Param (
     
-            [Parameter(Mandatory=$true,ParameterSetName="ById")]
-            [ValidateNotNullOrEmpty()]
-            [String[]]$Id,
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String[]]$Id,
     
-            [Parameter(Mandatory=$true,ParameterSetName="ById")]
-            [ValidateNotNullOrEmpty()]
-            [ValidateSet("on", "off", "shutdown", "suspend", "pause", "unpause")]
-            [String]$PowerState
-        )
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [ValidateSet("on", "off", "shutdown", "suspend", "pause", "unpause")]
+        [String]$PowerState
+    )
     
-        begin {
-        }
-        
-        process {
-        }
-        end {
-    
-            # --- Convert PSCustomObject to a string
-            $Body = $PowerState                    
-    
-            if ($PSCmdlet.ShouldProcess($Name)){
-    
-                $URI = "/api/vms/$Id/power"
-    
-                # --- Run Fusion REST Request
-                Invoke-FusionRestMethod -Method PUT -URI $URI -Body $Body -Verbose:$VerbosePreference | Out-Null
-    
-                # --- Output the Successful Result
-                Get-FusionVmPower -id $Id -Verbose:$VerbosePreference
-            }   
-        }
+    begin {
     }
+        
+    process {
+    }
+    end {
+    
+        # --- Convert PSCustomObject to a string
+        $Body = $PowerState                    
+    
+        if ($PSCmdlet.ShouldProcess($Name)) {
+    
+            $URI = "/api/vms/$Id/power"
+    
+            # --- Run Fusion REST Request
+            Invoke-FusionRestMethod -Method PUT -URI $URI -Body $Body -Verbose:$VerbosePreference | Out-Null
+    
+            # --- Output the Successful Result
+            Get-FusionVmPower -id $Id -Verbose:$VerbosePreference
+        }   
+    }
+}
 
 function Set-FusionVm {
-        <#
+    <#
             .SYNOPSIS
             Set the config of the fusion VM
             
@@ -919,53 +919,53 @@ function Set-FusionVm {
             .EXAMPLE
             Set-FusionVm -id "12345" -Cpus 2 -MemoryMb 4096
         #>
-        [CmdletBinding(SupportsShouldProcess,ConfirmImpact="Low",DefaultParameterSetName="ById")][OutputType('System.Management.Automation.PSObject')]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low", DefaultParameterSetName = "ById")][OutputType('System.Management.Automation.PSObject')]
         
-            Param (
+    Param (
         
-                [Parameter(Mandatory=$true,ParameterSetName="ById")]
-                [ValidateNotNullOrEmpty()]
-                [String[]]$Id,
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String[]]$Id,
         
-                [Parameter(Mandatory=$true,ParameterSetName="ById")]
-                [ValidateNotNullOrEmpty()]
-                [String]$processors,
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String]$processors,
 
-                [Parameter(Mandatory=$true,ParameterSetName="ById")]
-                [ValidateNotNullOrEmpty()]
-                [String]$memory
-            )
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String]$memory
+    )
         
-            begin {
-                $Object = [PSCustomObject] @{
-                    processors = $processors
-                    memory = $memory
-                }
-            }
-            
-            process {
-            }
-
-            end {
-        
-                # --- Convert PSCustomObject to a string
-                $Body = $Object | ConvertTo-Json                    
-        
-                if ($PSCmdlet.ShouldProcess($Name)){
-        
-                    $URI = "/api/vms/$Id"
-        
-                    # --- Run Fusion REST Request
-                    Invoke-FusionRestMethod -Method PUT -URI $URI -Body $Body -Verbose:$VerbosePreference | Out-Null
-        
-                    # --- Output the Successful Result
-                    Get-FusionVm -id $Id -Verbose:$VerbosePreference
-                }   
-            }
+    begin {
+        $Object = [PSCustomObject] @{
+            processors = $processors
+            memory     = $memory
         }
+    }
+            
+    process {
+    }
+
+    end {
+        
+        # --- Convert PSCustomObject to a string
+        $Body = $Object | ConvertTo-Json                    
+        
+        if ($PSCmdlet.ShouldProcess($Name)) {
+        
+            $URI = "/api/vms/$Id"
+        
+            # --- Run Fusion REST Request
+            Invoke-FusionRestMethod -Method PUT -URI $URI -Body $Body -Verbose:$VerbosePreference | Out-Null
+        
+            # --- Output the Successful Result
+            Get-FusionVm -id $Id -Verbose:$VerbosePreference
+        }   
+    }
+}
 
 function Clone-FusionVm {
-       <#
+    <#
         .SYNOPSIS
         Creates a new fusion vm via cloning existing fusion vm
         
@@ -987,44 +987,46 @@ function Clone-FusionVm {
         .EXAMPLE
         Clone-FusionVm -ParentiId "12345" -Name "NewMachine01"
     #>
-    [CmdletBinding(SupportsShouldProcess,ConfirmImpact="Low",DefaultParameterSetName="ById")][OutputType('System.Management.Automation.PSObject')]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low", DefaultParameterSetName = "ById")][OutputType('System.Management.Automation.PSObject')]
     
-        Param (
+    Param (
     
-            [Parameter(Mandatory=$true,ParameterSetName="ById")]
-            [ValidateNotNullOrEmpty()]
-            [String[]]$ParentId,
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String[]]$ParentId,
     
-            [Parameter(Mandatory=$true,ParameterSetName="ById")]
-            [ValidateNotNullOrEmpty()]
-            [String]$Name
-        )
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String]$Name
+    )
     
-        begin {
-            $Object = [PSCustomObject] @{
-                parentid = $ParentId
-                name = $Name
-            }
+    begin {
+        $Object = [PSCustomObject] @{
+            name     = $Name
+            parentId = $ParentId
         }
+    }
         
-        process {
-        }
-        end {
+    process {
+    }
+    end {
     
-            # --- Convert PSCustomObject to a string
-            $Body = $Object | ConvertFrom-Json                    
+        # --- Convert PSCustomObject to a string
+        $Body = $Object | ConvertTo-Json                   
     
-            if ($PSCmdlet.ShouldProcess($Name)){
+        if ($PSCmdlet.ShouldProcess($Name)) {
     
-                $URI = "/api/vms"
+            $URI = "/api/vms"
     
-                # --- Run Fusion REST Request
-                $Response = Invoke-FusionRestMethod -Method POST -URI $URI -Body $Body -Verbose:$VerbosePreference
+            # --- Run Fusion REST Request
+            $Response = Invoke-FusionRestMethod -Method POST -URI $URI -Body $Body -Verbose:$VerbosePreference
     
-                # --- Output the Successful Result
-                If ($Response.id){$Response}
-            }   
-        }
+            # --- Output the Successful Result
+            If ($Response.id) {$Response} else {
+                $Response
+            }
+        }   
+    }
 }
 function Delete-FusionVm {
     param (

@@ -1029,14 +1029,116 @@ function Clone-FusionVm {
     }
 }
 function Delete-FusionVm {
-    param (
-        $OptionalParameters
+    <#
+        .SYNOPSIS
+        Deletes a fusion vm
+        
+        .DESCRIPTION
+        Deletes a fusion vm
+    
+        .PARAMETER ParentId
+        ID of the VM to be cloned
+    
+        .INPUTS
+        System.String.
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject
+    
+        .EXAMPLE
+        Delete-FusionVm -Id "12345"
+    #>
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low", DefaultParameterSetName = "ById")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+    
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String]$Id
     )
+    
+    begin {
+    }
+        
+    process {
+    }
+    end {
+    
+        # --- Convert PSCustomObject to a string                 
+    
+        if ($PSCmdlet.ShouldProcess($Name)) {
+    
+            $URI = "/api/vms/$($Id)"
+    
+            # --- Run Fusion REST Request
+            $Response = Invoke-FusionRestMethod -Method DELETE -URI $URI -Verbose:$VerbosePreference
+    
+            # --- Output the Successful Result
+            If ($Response.id) {$Response} else {
+                $Response
+            }
+        }   
+    }
 }
 function Delete-FusionVmNetworkAdapter {
-    param (
-        $OptionalParameters
-    )   
+
+    <#
+        .SYNOPSIS
+        Deletes a fusion vm network adapter by index
+        
+        .DESCRIPTION
+        Deletes a fusion vm network adapter by index
+    
+        .PARAMETER Id
+        ID of the target VM
+
+        .PARAMETER Index
+        Index Number of the target VM network adapter
+    
+        .INPUTS
+        System.String.
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject
+    
+        .EXAMPLE
+        Delete-FusionVmNetworkadapter -Id "12345" -Index "1"
+    #>
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low", DefaultParameterSetName = "ById")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+    
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String]$Id,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String]$Index
+    )
+    
+    begin {
+    }
+        
+    process {
+    }
+    end {
+    
+        # --- Convert PSCustomObject to a string                 
+    
+        if ($PSCmdlet.ShouldProcess($Name)) {
+    
+            $URI = "/api/vms/$($Id)/nic/$($Index)"
+    
+            # --- Run Fusion REST Request
+            $Response = Invoke-FusionRestMethod -Method DELETE -URI $URI -Verbose:$VerbosePreference
+    
+            # --- Output the Successful Result
+            If ($Response.id) {$Response} else {
+                $Response
+            }
+        }   
+    }
 }
 
 function Create-FusionVmNetworkAdapter {

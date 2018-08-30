@@ -993,7 +993,7 @@ function Clone-FusionVm {
     
         [Parameter(Mandatory = $true, ParameterSetName = "ById")]
         [ValidateNotNullOrEmpty()]
-        [String[]]$ParentId,
+        [String]$ParentId,
     
         [Parameter(Mandatory = $true, ParameterSetName = "ById")]
         [ValidateNotNullOrEmpty()]

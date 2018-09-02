@@ -7,6 +7,8 @@ _____                                     ______                 _
 |_|       \___/    \_/\_/    \___| |_|    |_|       \__,_| |___/ |_|  \___/  |_| |_|
 #>
 
+#region Init and Common
+
 # --- Clean up FusionConnection variable on module remove
 $ExecutionContext.SessionState.Module.OnRemove = {
     Remove-Variable -Name FusionConnection -Force -ErrorAction SilentlyContinue
@@ -304,6 +306,228 @@ function Invoke-FusionRestMethod {
         }
     }
 }
+
+#endregion
+
+#region - Host Networks Management
+
+function Get-FusionNetwork {
+    <#
+        .SYNOPSIS
+        Get a VMware Fusion Network
+        
+        .DESCRIPTION
+        Returns a network or networks usable in VMware Fusion via the Rest API.
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject.
+    
+        .EXAMPLE
+        Get-FusionNetwork
+    
+    #>
+    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+    )
+    
+    Begin {
+    
+        # --- Test for Fusion API version
+    
+    }
+    
+    Process {
+    
+        try {
+    
+            switch ($PsCmdlet.ParameterSetName) {     
+
+                # --- No parameters passed so return all resources
+                'Standard' {
+       
+                    $EscapedURI = [uri]::EscapeUriString("/api/vmnet")
+
+                    try {
+                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                            
+                        if ($Response) {
+                            foreach ($R in $Response.vmnets) {
+                                [PSCustomObject]@{
+                                    name   = $R.name
+                                    type   = $R.type
+                                    dhcp   = $R.dhcp
+                                    subnet = $R.subnet
+                                    mask   = $R.mask
+                                }
+                            }
+                        }
+                    }
+                    catch {
+                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
+                    }                        
+                    break
+                }
+            }
+        }
+        catch [Exception] {
+            throw
+        }
+    }   
+    End {    
+    }    
+}
+
+function Get-FusionNetworkPortForward {
+    <#
+        .SYNOPSIS
+        Get a VMware Fusion Network Port Forward
+        
+        .DESCRIPTION
+        Returns a network Port Forwarder/s per network in VMware Fusion via the Rest API.
+
+        .PARAMETER Id
+        The vmnet id of the network resource
+
+        .INPUTS
+        String
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject.
+    
+        .EXAMPLE
+        Get-FusionNetworkPortForward -vmnet
+    
+    #>
+    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "Standard")]
+        [ValidateNotNullOrEmpty()]
+        [String[]]$id       
+    )
+    
+    Begin {
+    
+        # --- Test for Fusion API version
+    
+    }
+    
+    Process {
+    
+        try {
+    
+            switch ($PsCmdlet.ParameterSetName) {     
+
+                # --- No parameters passed so return all resources
+                'Standard' {
+       
+                    $EscapedURI = [uri]::EscapeUriString("/api/vmnet/$($id)/portforward")
+
+                    try {
+                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                            
+                        if ($Response) {
+                            foreach ($R in $Response) {
+                                [PSCustomObject]@{
+                                    num              = $R.num
+                                    port_forwardings = $R.port_forwardings
+                                }
+                            }
+                        }
+                    }
+                    catch {
+                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
+                    }                        
+                    break
+                }
+            }
+        }
+        catch [Exception] {
+            throw
+        }
+    }   
+    End {    
+    }    
+}
+
+function Set-FusionNetworkPortForward {
+    param (
+        $OptionalParameters
+    )
+}
+
+function Remove-FusionNetworkPortForward {
+    <#
+        .SYNOPSIS
+        Deletes a fusion network port forward
+        
+        .DESCRIPTION
+        Deletes a fusion network port forward
+    
+        .PARAMETER Vmnet
+        NAT type of the virtual network
+
+        .PARAMETER Protocol
+        Protocol type - TCP or UDP
+
+        .PARAMETER Port
+        Port number at the host level
+
+        .INPUTS
+        System.String.
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject
+    
+        .EXAMPLE
+        Delete-FusionNetworkPortForward -Vmnet "" -Protocol "" -Port ""
+    #>
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low", DefaultParameterSetName = "ById")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+    
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String]$Vmnet,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String]$Protocol,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String]$Port
+    )
+    
+    begin {
+    }
+        
+    process {
+    }
+    end {
+    
+        # --- Convert PSCustomObject to a string                 
+    
+        if ($PSCmdlet.ShouldProcess($Name)) {
+    
+            $URI = "/api/vms/$($Id)/nic/$($Index)"
+    
+            # --- Run Fusion REST Request
+            $Response = Invoke-FusionRestMethod -Method DELETE -URI $URI -Verbose:$VerbosePreference
+    
+            # --- Output the Successful Result
+            If ($Response.id) {$Response} else {
+                $Response
+            }
+        }   
+    }
+}
+
+#endregion
+
+#region - VM Management
+
 function Get-FusionVm {
 
     <#
@@ -408,489 +632,6 @@ function Get-FusionVm {
     }   
     End {    
     }    
-}
-function Get-FusionNetwork {
-    <#
-        .SYNOPSIS
-        Get a VMware Fusion Network
-        
-        .DESCRIPTION
-        Returns a network or networks usable in VMware Fusion via the Rest API.
-    
-        .OUTPUTS
-        System.Management.Automation.PSObject.
-    
-        .EXAMPLE
-        Get-FusionNetwork
-    
-    #>
-    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
-    
-    Param (
-    )
-    
-    Begin {
-    
-        # --- Test for Fusion API version
-    
-    }
-    
-    Process {
-    
-        try {
-    
-            switch ($PsCmdlet.ParameterSetName) {     
-
-                # --- No parameters passed so return all resources
-                'Standard' {
-       
-                    $EscapedURI = [uri]::EscapeUriString("/api/vmnet")
-
-                    try {
-                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
-                            
-                        if ($Response) {
-                            foreach ($R in $Response.vmnets) {
-                                [PSCustomObject]@{
-                                    name   = $R.name
-                                    type   = $R.type
-                                    dhcp   = $R.dhcp
-                                    subnet = $R.subnet
-                                    mask   = $R.mask
-                                }
-                            }
-                        }
-                    }
-                    catch {
-                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
-                    }                        
-                    break
-                }
-            }
-        }
-        catch [Exception] {
-            throw
-        }
-    }   
-    End {    
-    }    
-}
-function Get-FusionNetworkPortForward {
-    <#
-        .SYNOPSIS
-        Get a VMware Fusion Network Port Forward
-        
-        .DESCRIPTION
-        Returns a network Port Forwarder/s per network in VMware Fusion via the Rest API.
-
-        .PARAMETER Id
-        The vmnet id of the network resource
-
-        .INPUTS
-        String
-    
-        .OUTPUTS
-        System.Management.Automation.PSObject.
-    
-        .EXAMPLE
-        Get-FusionNetworkPortForward -vmnet
-    
-    #>
-    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
-    
-    Param (
-        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "Standard")]
-        [ValidateNotNullOrEmpty()]
-        [String[]]$id       
-    )
-    
-    Begin {
-    
-        # --- Test for Fusion API version
-    
-    }
-    
-    Process {
-    
-        try {
-    
-            switch ($PsCmdlet.ParameterSetName) {     
-
-                # --- No parameters passed so return all resources
-                'Standard' {
-       
-                    $EscapedURI = [uri]::EscapeUriString("/api/vmnet/$($id)/portforward")
-
-                    try {
-                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
-                            
-                        if ($Response) {
-                            foreach ($R in $Response) {
-                                [PSCustomObject]@{
-                                    num              = $R.num
-                                    port_forwardings = $R.port_forwardings
-                                }
-                            }
-                        }
-                    }
-                    catch {
-                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
-                    }                        
-                    break
-                }
-            }
-        }
-        catch [Exception] {
-            throw
-        }
-    }   
-    End {    
-    }    
-}
-function Get-FusionVmNetworkAdapter {
-    <#
-        .SYNOPSIS
-        Get a VMware Fusion VM Network Adapter
-        
-        .DESCRIPTION
-        Returns a VM network adapter per VM in VMware Fusion via the Rest API.
-
-        .PARAMETER Id
-        The vmnet id of the vm
-
-        .INPUTS
-        String
-    
-        .OUTPUTS
-        System.Management.Automation.PSObject.
-    
-        .EXAMPLE
-        Get-FusionVmNetworkAdapter -id "AHA7A1"
-    
-    #>
-    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
-    
-    Param (
-        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "Standard")]
-        [ValidateNotNullOrEmpty()]
-        [String[]]$id       
-    )
-    
-    Begin {
-    
-        # --- Test for Fusion API version
-    
-    }
-    
-    Process {
-    
-        try {
-    
-            switch ($PsCmdlet.ParameterSetName) {     
-
-                # --- No parameters passed so return all resources
-                'Standard' {
-       
-                    $EscapedURI = [uri]::EscapeUriString("/api/vms/$($id)/nic")
-
-                    try {
-                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
-                            
-                        if ($Response) {
-                            foreach ($R in $Response.nics) {
-                                [PSCustomObject]@{
-                                    index = $R.index
-                                    type  = $R.type
-                                    vmnet = $R.vmnet
-                                }
-                            }
-                        }
-                    }
-                    catch {
-                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
-                    }                        
-                    break
-                }
-            }
-        }
-        catch [Exception] {
-            throw
-        }
-    }   
-    End {    
-    }    
-}
-function Get-FusionVmNetworkIp {
-    <#
-        .SYNOPSIS
-        Get a VMware Fusion VM Network IP
-        
-        .DESCRIPTION
-        Returns a VM network IP per VM in VMware Fusion via the Rest API.
-
-        .PARAMETER Id
-        The vmnet id of the vm
-
-        .INPUTS
-        String
-    
-        .OUTPUTS
-        System.Management.Automation.PSObject.
-    
-        .EXAMPLE
-        Get-FusionVmNetworkIp -id "AHA7A1"
-    
-    #>
-    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
-    
-    Param (
-        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "Standard")]
-        [ValidateNotNullOrEmpty()]
-        [String[]]$id       
-    )
-    
-    Begin {
-    
-        # --- Test for Fusion API version
-    
-    }
-    
-    Process {
-    
-        try {
-    
-            switch ($PsCmdlet.ParameterSetName) {     
-
-                # --- No parameters passed so return all resources
-                'Standard' {
-       
-                    $EscapedURI = [uri]::EscapeUriString("/api/vms/$($id)/ip")
-
-                    try {
-                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
-                            
-                        if ($Response) {
-                            foreach ($R in $Response) {
-                                [PSCustomObject]@{
-                                    ip = $R.ip
-                                }
-                            }
-                        }
-                    }
-                    catch {
-                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
-                    }                        
-                    break
-                }
-            }
-        }
-        catch [Exception] {
-            throw
-        }
-    }   
-    End {    
-    }    
-}
-function Get-FusionVmPower {
-    <#
-        .SYNOPSIS
-        Get a VMware Fusion VM Power State
-        
-        .DESCRIPTION
-        Returns a VM Power State in VMware Fusion via the Rest API.
-
-        .PARAMETER Id
-        The vmnet id of the vm
-
-        .INPUTS
-        String
-    
-        .OUTPUTS
-        System.Management.Automation.PSObject.
-    
-        .EXAMPLE
-        Get-FusionVmPower -id "AHA7A1"
-    
-    #>
-    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
-    
-    Param (
-        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "Standard")]
-        [ValidateNotNullOrEmpty()]
-        [String[]]$id       
-    )
-    
-    Begin {
-    
-        # --- Test for Fusion API version
-    
-    }
-    
-    Process {
-    
-        try {
-    
-            switch ($PsCmdlet.ParameterSetName) {     
-
-                # --- No parameters passed so return all resources
-                'Standard' {
-       
-                    $EscapedURI = [uri]::EscapeUriString("/api/vms/$($id)/power")
-
-                    try {
-                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
-                            
-                        if ($Response) {
-                            foreach ($R in $Response) {
-                                [PSCustomObject]@{
-                                    power_state = $R.power_state
-                                }
-                            }
-                        }
-                    }
-                    catch {
-                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
-                    }                        
-                    break
-                }
-            }
-        }
-        catch [Exception] {
-            throw
-        }
-    }   
-    End {    
-    }    
-}
-function Get-FusionVmSharedFolders {
-    <#
-        .SYNOPSIS
-        Get a VMware Fusion VM Shared Folders
-        
-        .DESCRIPTION
-        Returns a VM's shared folders in VMware Fusion via the Rest API.
-
-        .PARAMETER Id
-        The vmnet id of the vm
-
-        .INPUTS
-        String
-    
-        .OUTPUTS
-        System.Management.Automation.PSObject.
-    
-        .EXAMPLE
-        Get-FusionVmShareFolder -id "AHA7A1"
-    
-    #>
-    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
-    
-    Param (
-        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "Standard")]
-        [ValidateNotNullOrEmpty()]
-        [String[]]$id       
-    )
-    
-    Begin {
-    
-        # --- Test for Fusion API version
-    
-    }
-    
-    Process {
-    
-        try {
-    
-            switch ($PsCmdlet.ParameterSetName) {     
-
-                # --- No parameters passed so return all resources
-                'Standard' {
-       
-                    $EscapedURI = [uri]::EscapeUriString("/api/vms/$($id)/sharedfolders")
-
-                    try {
-                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
-                            
-                        if ($Response) {
-                            foreach ($R in $Response) {
-                                [PSCustomObject]@{
-                                    power_state = $R.power_state
-                                }
-                            }
-                        }
-                    }
-                    catch {
-                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
-                    }                        
-                    break
-                }
-            }
-        }
-        catch [Exception] {
-            throw
-        }
-    }   
-    End {    
-    }    
-}
-function Set-FusionVmPower {
-    <#
-        .SYNOPSIS
-        Set the power state on a fusion VM
-        
-        .DESCRIPTION
-        Set the power state on a fusion VM
-    
-        .PARAMETER Id
-        A list of the vm ids
-    
-        .PARAMETER PowerState
-        the desired power state
-    
-        .INPUTS
-        System.String.
-    
-        .OUTPUTS
-        System.Management.Automation.PSObject
-    
-        .EXAMPLE
-        Set-FusionVmPower -id "12345" -PowerState "on"
-    #>
-    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low", DefaultParameterSetName = "ById")][OutputType('System.Management.Automation.PSObject')]
-    
-    Param (
-    
-        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
-        [ValidateNotNullOrEmpty()]
-        [String[]]$Id,
-    
-        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
-        [ValidateNotNullOrEmpty()]
-        [ValidateSet("on", "off", "shutdown", "suspend", "pause", "unpause")]
-        [String]$PowerState
-    )
-    
-    begin {
-    }
-        
-    process {
-    }
-    end {
-    
-        # --- Convert PSCustomObject to a string
-        $Body = $PowerState                    
-    
-        if ($PSCmdlet.ShouldProcess($Name)) {
-    
-            $URI = "/api/vms/$Id/power"
-    
-            # --- Run Fusion REST Request
-            Invoke-FusionRestMethod -Method PUT -URI $URI -Body $Body -Verbose:$VerbosePreference | Out-Null
-    
-            # --- Output the Successful Result
-            Get-FusionVmPower -id $Id -Verbose:$VerbosePreference
-        }   
-    }
 }
 
 function Set-FusionVm {
@@ -1028,6 +769,7 @@ function Clone-FusionVm {
         }   
     }
 }
+
 function Delete-FusionVm {
     <#
         .SYNOPSIS
@@ -1036,7 +778,7 @@ function Delete-FusionVm {
         .DESCRIPTION
         Deletes a fusion vm
     
-        .PARAMETER ParentId
+        .PARAMETER Id
         ID of the VM to be cloned
     
         .INPUTS
@@ -1080,8 +822,170 @@ function Delete-FusionVm {
         }   
     }
 }
-function Delete-FusionVmNetworkAdapter {
 
+#endregion
+
+#region - VM Network Adapters Management
+
+function Get-FusionVmNetworkAdapter {
+    <#
+        .SYNOPSIS
+        Get a VMware Fusion VM Network Adapter
+        
+        .DESCRIPTION
+        Returns a VM network adapter per VM in VMware Fusion via the Rest API.
+
+        .PARAMETER Id
+        The vmnet id of the vm
+
+        .INPUTS
+        String
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject.
+    
+        .EXAMPLE
+        Get-FusionVmNetworkAdapter -id "AHA7A1"
+    
+    #>
+    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "Standard")]
+        [ValidateNotNullOrEmpty()]
+        [String[]]$id       
+    )
+    
+    Begin {
+    
+        # --- Test for Fusion API version
+    
+    }
+    
+    Process {
+    
+        try {
+    
+            switch ($PsCmdlet.ParameterSetName) {     
+
+                # --- No parameters passed so return all resources
+                'Standard' {
+       
+                    $EscapedURI = [uri]::EscapeUriString("/api/vms/$($id)/nic")
+
+                    try {
+                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                            
+                        if ($Response) {
+                            foreach ($R in $Response.nics) {
+                                [PSCustomObject]@{
+                                    index = $R.index
+                                    type  = $R.type
+                                    vmnet = $R.vmnet
+                                }
+                            }
+                        }
+                    }
+                    catch {
+                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
+                    }                        
+                    break
+                }
+            }
+        }
+        catch [Exception] {
+            throw
+        }
+    }   
+    End {    
+    }    
+}
+
+function Get-FusionVmNetworkIp {
+    <#
+        .SYNOPSIS
+        Get a VMware Fusion VM Network IP
+        
+        .DESCRIPTION
+        Returns a VM network IP per VM in VMware Fusion via the Rest API.
+
+        .PARAMETER Id
+        The vmnet id of the vm
+
+        .INPUTS
+        String
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject.
+    
+        .EXAMPLE
+        Get-FusionVmNetworkIp -id "AHA7A1"
+    
+    #>
+    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "Standard")]
+        [ValidateNotNullOrEmpty()]
+        [String[]]$id       
+    )
+    
+    Begin {
+    
+        # --- Test for Fusion API version
+    
+    }
+    
+    Process {
+    
+        try {
+    
+            switch ($PsCmdlet.ParameterSetName) {     
+
+                # --- No parameters passed so return all resources
+                'Standard' {
+       
+                    $EscapedURI = [uri]::EscapeUriString("/api/vms/$($id)/ip")
+
+                    try {
+                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                            
+                        if ($Response) {
+                            foreach ($R in $Response) {
+                                [PSCustomObject]@{
+                                    ip = $R.ip
+                                }
+                            }
+                        }
+                    }
+                    catch {
+                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
+                    }                        
+                    break
+                }
+            }
+        }
+        catch [Exception] {
+            throw
+        }
+    }   
+    End {    
+    }    
+}
+
+function Set-FusionVmNetworkAdapter {
+    param (
+        $OptionalParameters
+    )   
+}
+
+function Create-FusionVmNetworkAdapter {
+    param (
+        $OptionalParameters
+    )   
+}
+
+function Delete-FusionVmNetworkAdapter {
     <#
         .SYNOPSIS
         Deletes a fusion vm network adapter by index
@@ -1141,31 +1045,218 @@ function Delete-FusionVmNetworkAdapter {
     }
 }
 
-function Create-FusionVmNetworkAdapter {
-    param (
-        $OptionalParameters
-    )   
-}
+#endregion
 
-function Set-FusionVmNetworkAdapter {
-    param (
-        $OptionalParameters
-    )   
-}
+#region - VM Power Management
 
-function Set-FusionNetworkPortForward {
-    param (
-        $OptionalParameters
+function Get-FusionVmPower {
+    <#
+        .SYNOPSIS
+        Get a VMware Fusion VM Power State
+        
+        .DESCRIPTION
+        Returns a VM Power State in VMware Fusion via the Rest API.
+
+        .PARAMETER Id
+        The vmnet id of the vm
+
+        .INPUTS
+        String
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject.
+    
+        .EXAMPLE
+        Get-FusionVmPower -id "AHA7A1"
+    
+    #>
+    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "Standard")]
+        [ValidateNotNullOrEmpty()]
+        [String[]]$id       
     )
-}
+    
+    Begin {
+    
+        # --- Test for Fusion API version
+    
+    }
+    
+    Process {
+    
+        try {
+    
+            switch ($PsCmdlet.ParameterSetName) {     
 
-function Delete-FusionNetworkPortForward {
-    param (
-        $OptionalParameters
+                # --- No parameters passed so return all resources
+                'Standard' {
+       
+                    $EscapedURI = [uri]::EscapeUriString("/api/vms/$($id)/power")
+
+                    try {
+                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                            
+                        if ($Response) {
+                            foreach ($R in $Response) {
+                                [PSCustomObject]@{
+                                    power_state = $R.power_state
+                                }
+                            }
+                        }
+                    }
+                    catch {
+                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
+                    }                        
+                    break
+                }
+            }
+        }
+        catch [Exception] {
+            throw
+        }
+    }   
+    End {    
+    }    
+}
+function Set-FusionVmPower {
+    <#
+        .SYNOPSIS
+        Set the power state on a fusion VM
+        
+        .DESCRIPTION
+        Set the power state on a fusion VM
+    
+        .PARAMETER Id
+        A list of the vm ids
+    
+        .PARAMETER PowerState
+        the desired power state
+    
+        .INPUTS
+        System.String.
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject
+    
+        .EXAMPLE
+        Set-FusionVmPower -id "12345" -PowerState "on"
+    #>
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low", DefaultParameterSetName = "ById")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+    
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String[]]$Id,
+    
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [ValidateSet("on", "off", "shutdown", "suspend", "pause", "unpause")]
+        [String]$PowerState
     )
+    
+    begin {
+    }
+        
+    process {
+    }
+    end {
+    
+        # --- Convert PSCustomObject to a string
+        $Body = $PowerState                    
+    
+        if ($PSCmdlet.ShouldProcess($Name)) {
+    
+            $URI = "/api/vms/$Id/power"
+    
+            # --- Run Fusion REST Request
+            Invoke-FusionRestMethod -Method PUT -URI $URI -Body $Body -Verbose:$VerbosePreference | Out-Null
+    
+            # --- Output the Successful Result
+            Get-FusionVmPower -id $Id -Verbose:$VerbosePreference
+        }   
+    }
 }
 
-function Delete-FusionVmSharedFolders {
+#endregion
+
+#region - VM Shared Folders Management
+
+function Get-FusionVmSharedFolders {
+    <#
+        .SYNOPSIS
+        Get a VMware Fusion VM Shared Folders
+        
+        .DESCRIPTION
+        Returns a VM's shared folders in VMware Fusion via the Rest API.
+
+        .PARAMETER Id
+        The vmnet id of the vm
+
+        .INPUTS
+        String
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject.
+    
+        .EXAMPLE
+        Get-FusionVmShareFolder -id "AHA7A1"
+    
+    #>
+    [CmdletBinding(DefaultParameterSetName = "Standard")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "Standard")]
+        [ValidateNotNullOrEmpty()]
+        [String[]]$id       
+    )
+    
+    Begin {
+    
+        # --- Test for Fusion API version
+    
+    }
+    
+    Process {
+    
+        try {
+    
+            switch ($PsCmdlet.ParameterSetName) {     
+
+                # --- No parameters passed so return all resources
+                'Standard' {
+       
+                    $EscapedURI = [uri]::EscapeUriString("/api/vms/$($id)/sharedfolders")
+
+                    try {
+                        $Response = Invoke-FusionRestMethod -Method GET -URI $EscapedURI -Verbose:$VerbosePreference
+                            
+                        if ($Response) {
+                            foreach ($R in $Response) {
+                                [PSCustomObject]@{
+                                    power_state = $R.power_state
+                                }
+                            }
+                        }
+                    }
+                    catch {
+                        throw "An error occurred when getting Fusion Resources! $($_.Exception.Message)"
+                    }                        
+                    break
+                }
+            }
+        }
+        catch [Exception] {
+            throw
+        }
+    }   
+    End {    
+    }    
+}
+
+function Set-FusionVmSharedFolders {
     param (
         $OptionalParameters
     )
@@ -1179,11 +1270,64 @@ function Mount-FusionVmSharedFolders {
     
 }
 
-function Set-FusionVmSharedFolders {
-    param (
-        $OptionalParameters
+function Delete-FusionVmSharedFolders {
+    <#
+        .SYNOPSIS
+        Deletes a fusion vm network adapter by index
+        
+        .DESCRIPTION
+        Deletes a fusion vm network adapter by index
+    
+        .PARAMETER Id
+        ID of the target VM
+
+        .PARAMETER Index
+        Index Number of the target VM network adapter
+    
+        .INPUTS
+        System.String.
+    
+        .OUTPUTS
+        System.Management.Automation.PSObject
+    
+        .EXAMPLE
+        Delete-FusionVmNetworkadapter -Id "12345" -Index "1"
+    #>
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low", DefaultParameterSetName = "ById")][OutputType('System.Management.Automation.PSObject')]
+    
+    Param (
+    
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String]$Id,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "ById")]
+        [ValidateNotNullOrEmpty()]
+        [String]$Index
     )
     
+    begin {
+    }
+        
+    process {
+    }
+    end {
+    
+        # --- Convert PSCustomObject to a string                 
+    
+        if ($PSCmdlet.ShouldProcess($Name)) {
+    
+            $URI = "/api/vms/$($Id)/nic/$($Index)"
+    
+            # --- Run Fusion REST Request
+            $Response = Invoke-FusionRestMethod -Method DELETE -URI $URI -Verbose:$VerbosePreference
+    
+            # --- Output the Successful Result
+            If ($Response.id) {$Response} else {
+                $Response
+            }
+        }   
+    }
 }
 
-###
+#endregion
